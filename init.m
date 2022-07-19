@@ -17,7 +17,6 @@ end
 
 disp('Complete Init');
 
-
 %% function
 function pup_port = find_pup_port()
     disp("Поиск ПУП...");
@@ -26,7 +25,7 @@ function pup_port = find_pup_port()
 
     for port = ports
         fprintf("Попытка подключения к порту %s\n", port);
-        pup_port = serialport(port, baudrate, Timeout = 0.5);
+        pup_port = serialport(port, baudrate, 'Timeout', 0.5);
         pup_port.flush();
 
         w = warning('off', 'all');
@@ -50,7 +49,7 @@ function pmes_port = find_pmes_port()
 
     for port = ports
         fprintf("Попытка подключения к порту %s\n", port);
-        pmes_port = serialport(port, baudrate, Timeout = 0.5);
+        pmes_port = serialport(port, baudrate, 'Timeout', 0.5);
         pmes_port.flush();
 
         w = warning('off', 'all');
@@ -58,7 +57,7 @@ function pmes_port = find_pmes_port()
         data = pmes_port.read(8, "single");
         warning(w);
 
-        if ~isempty(data) && data == "test"
+        if ~isempty(data)
             return;
         end
 
