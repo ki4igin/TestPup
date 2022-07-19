@@ -1,27 +1,26 @@
 disp('Start Init');
 
-% pup_port = find_pup_port();
-% pmes_port = find_pmes_port();
+pup_port = find_pup_port();
+pmes_port = find_pmes_port();
 
-% if isempty(pup_port)
-%     disp('Плата ПУП не найдена');
-%     return
-% else
-%     fprintf("Плата ПУП подключена к порту %s\n", pup_port.Port);
-% end
+if isempty(pup_port)
+    disp('Плата ПУП не найдена');
+else
+    fprintf("Плата ПУП подключена к порту %s\n", pup_port.Port);
+end
 
-% if isempty(pup_port)
-%     disp('Плата ПУП не найдена');
-%     return
-% else
-%     fprintf("Плата измерений подключена к порту %s\n", pmes_port.Port);
-% end
+if isempty(pmes_port)
+    disp('Плата измерений не найдена');
+else
+    fprintf("Плата измерений подключена к порту %s\n", pmes_port.Port);
+end
 
 disp('Complete Init');
 
 
 %% function
 function pup_port = find_pup_port()
+    disp("Поиск ПУП...");
     baudrate = 115200;
     ports = serialportlist("available");
 
@@ -45,6 +44,7 @@ function pup_port = find_pup_port()
 end
 
 function pmes_port = find_pmes_port()
+    disp("Поиск платы измерений...");
     baudrate = 115200;
     ports = serialportlist("available");
 
@@ -54,8 +54,8 @@ function pmes_port = find_pmes_port()
         pmes_port.flush();
 
         w = warning('off', 'all');
-        pmes_port.write("test", "uint8");
-        data = pmes_port.read(4, "char");
+        pmes_port.write("TEST", "uint8");
+        data = pmes_port.read(8, "single");
         warning(w);
 
         if ~isempty(data) && data == "test"

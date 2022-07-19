@@ -16,30 +16,32 @@ txt = text(0, 0, "");
 
 for i = 1:length(deg_ref)
     % pup_write(0x11, uint32(deg_ref(i) * 10));
-    % mes_port.write("test", 4);
-    % data = mes_port.read(6, "single");
+    mes_port.write("TEST", 4);
+    data = mes_port.read(8, "single");
+    disp(data);
     % deg_mes(i) = data(2);
-    deg_mes(i) = data(i);
-    deg_delta(i) = deg_mes(i) - deg_ref(i);
+    % deg_mes(i) = data(i);
+    % deg_delta(i) = deg_mes(i) - deg_ref(i);
 
-    x = deg_ref(i);
-    y = deg_delta(i);
+    % x = deg_ref(i);
+    % y = deg_delta(i);
 
-    addpoints(al, x, y);
-    p.XData = x;
-    p.YData = y;
-    txt.Position = [x, y];
-    txt.String = ['\leftarrow' num2str(y)];
-    drawnow limitrate
+    % addpoints(al, x, y);
+    % p.XData = x;
+    % p.YData = y;
+    % txt.Position = [x, y];
+    % txt.String = ['\leftarrow' num2str(y)];
+    % drawnow limitrate
 
-    pause(0.01);
+    pause(1);
 
 end
 
-outdata = [deg_ref, deg_mes, deg_delta];
-save('data.mat', 'outdata');
+% outdata = [deg_ref, deg_mes, deg_delta];
+% save('data.mat', 'outdata');
 
 disp("Press Ctrl+C to exit ;)");
+
 while true
 end
 
