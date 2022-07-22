@@ -1,7 +1,12 @@
 disp('Start Init');
 
-pup_port = find_pup_port();
-pmes_port = find_pmes_port();
+insys_port = find_insys_port();
+
+if isempty(insys_port)
+    disp('Инсус не найдена');
+else
+    fprintf("Инсус подключена к порту %s\n", insys_port.Port);
+end
 
 if isempty(pup_port)
     disp('Плата ПУП не найдена');
@@ -45,16 +50,16 @@ end
 function pmes_port = find_pmes_port()
     disp("Поиск платы измерений...");
     baudrate = 115200;
-    ports = serialportlist("available");
+    % ports = serialportlist("available");
+    ports = "COM6";
 
     for port = ports
         fprintf("Попытка подключения к порту %s\n", port);
-        pmes_port = serialport(port, baudrate, 'Timeout', 0.5);
-        pmes_port.flush();
+        insys_port = serialport(port, baudrate, Timeout = 5);
+        insys_port.flush();
 
         w = warning('off', 'all');
-        pmes_port.write("TEST", "uint8");
-        data = pmes_port.read(8, "single");
+        data = insys_port.readline();
         warning(w);
 
         if ~isempty(data)
@@ -63,6 +68,6 @@ function pmes_port = find_pmes_port()
 
     end
 
-    pmes_port = [];
+    insys_port = [];
 
 end
