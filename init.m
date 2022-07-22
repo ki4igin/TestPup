@@ -25,7 +25,7 @@ function pup_port = find_pup_port()
 
     for port = ports
         fprintf("Попытка подключения к порту %s\n", port);
-        pup_port = serialport(port, baudrate, 'Timeout', 0.5);
+        pup_port = serialport(port, baudrate, 'Timeout', 0.5, 'StopBits',2);
         pup_port.flush();
 
         w = warning('off', 'all');
