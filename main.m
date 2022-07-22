@@ -1,4 +1,4 @@
-init
+run("init")
 
 i = 0;
 cnt_old = 0;
