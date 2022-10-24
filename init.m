@@ -1,24 +1,10 @@
 disp('Start Init');
 
-insys_port = find_insys_port();
-
-if isempty(insys_port)
-    disp('Инсус не найдена');
-else
-    fprintf("Инсус подключена к порту %s\n", insys_port.Port);
-end
-
-if isempty(pup_port)
-    disp('Плата ПУП не найдена');
-else
-    fprintf("Плата ПУП подключена к порту %s\n", pup_port.Port);
-end
-
-if isempty(pmes_port)
-    disp('Плата измерений не найдена');
-else
-    fprintf("Плата измерений подключена к порту %s\n", pmes_port.Port);
-end
+dev_ports = struct(...
+    'pmes', find_pmes_port(), ...
+    'pup', find_pup_port(), ...
+    'kama', find_kama_port() ...
+);
 
 disp('Complete Init');
 
@@ -43,6 +29,7 @@ function pup_port = find_pup_port()
 
     end
 
+    disp('Плата ПУП не найдена');
     pup_port = [];
 
 end
@@ -50,24 +37,45 @@ end
 function pmes_port = find_pmes_port()
     disp("Поиск платы измерений...");
     baudrate = 115200;
-    % ports = serialportlist("available");
-    ports = "COM6";
+    ports = serialportlist("available");
+    % ports = "COM6";
 
     for port = ports
         fprintf("Попытка подключения к порту %s\n", port);
-        insys_port = serialport(port, baudrate, Timeout = 5);
-        insys_port.flush();
+        pmes_port = serialport(port, baudrate, Timeout = 5);
+        pmes_port.flush();
 
         w = warning('off', 'all');
-        data = insys_port.readline();
+        data = pmes_port.readline();
         warning(w);
 
         if ~isempty(data)
             return;
         end
-
     end
-
-    insys_port = [];
-
+    disp('Плата измерений не найдена');
+    pmes_port = [];
 end
+
+function dev_port = find_kama_port()  
+    disp("Поиск порта для Камы..."); 
+    baudrate = 115200;
+    ports = serialportlist("available");    
+
+    for port = ports
+        fprintf("Попытка подключения к порту %s\n", port);
+        dev_port = serialport(port, baudrate, Timeout = 5);
+        dev_port.flush();
+
+        w = warning('off', 'all');
+        data = 5;
+        warning(w);
+
+        if ~isempty(data)
+            return;
+        end
+    end
+    disp("Порта для Камы не найден..."); 
+    dev_port = [];
+end
+
