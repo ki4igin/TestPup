@@ -1,161 +1,154 @@
 clear
-run("init")
+% название платы для теста "az" или "el"
+pup_name = 'az';
+run("init");
 
-kama_send(dev_ports.kama, [50.0 12.0 54545]);
+pup_port = dev_ports.pup;
+pmes_port = dev_ports.pmes;
+kama_port = dev_ports.kama;
+
+% kama_send(dev_ports.kama, [50.0 12.0 54545]);
 
 % Задание режима ПУП
-pup_write(pup_port, 0x11, 1);
+pup_write(pup_name, pup_port, 0x1, 2);
 pause(0.5);
 
 % Задание коррекции ошибки
-pup_write(pup_port, 0x16, 0);
+pup_send_cor(pup_name, pup_port, -0.5);
 pause(0.1);
 
 % return
 input("Нажмите Enter для начала теста")
 
-% hold on
 f = figure;
-tiledlayout(2, 1);
-ax1 = nexttile;
-ax2 = nexttile;
-linkaxes([ax1 ax2], 'x');
-p = plot(ax2, 0, 0, 'o', MarkerFaceColor = 'red');
-p_new_old = plot(ax1, [0 0], [0 0], 'o', MarkerFaceColor = 'red');
-al = animatedline(ax2, 'Color', "red");
-al_new = animatedline(ax1, 'Color', "green");
-al_old = animatedline(ax1, 'Color', "blue");
-% hold off
-txt = text(0, 0, "\leftarrow' num2str(0)");
-txt_new = text(ax1, 0, 0, "\leftarrow' num2str(0)");
-txt_old = text(ax1, 0, 0, "\leftarrow' num2str(0)");
+p = plot(0, 0, 'o', 'MarkerFaceColor', 'red');
+al = animatedline('Color', [0 .7 .7]);
+txt = text(0, 0, "");
 
-while true
-    deg_test = [(355.5:0.1:359.9)'; (0.0:0.1:5.0)'];
-    deg_test = repelem(45, 10);
-    k = 10;
+deg_test = (0:2:361)';
+%deg_test = repelem(1,100);
+k = 2;
 
-    deg_ref = repelem(deg_test, k);
-    deg_mes = deg_ref * 0;
-    deg_delta = deg_ref * 0;
+deg_ref = repelem(deg_test, k);
+deg_mes = deg_ref * 0;
+deg_delta = deg_ref * 0;
 
-    xticks(1:k:length(deg_ref));
-    xticklabels(deg_test);
+xticks(1:k:length(deg_ref));
+xticklabels(deg_test);
 
-    pup_write(pup_port, 0x12, uint32(deg_test(1) * 10));
-    pause(0.2);
-    pup_write(pup_port, 0x12, uint32(deg_test(1) * 10));
-    pause(0.2);
+pup_send_deg(pup_name, pup_port, deg_test(1));
+pause(0.2);
+pup_send_deg(pup_name, pup_port, deg_test(1));
+pause(0.2);
 
-    for i = 1:length(deg_ref)
-
-        if mod(i, k) == 1
-            fprintf("\n");
-            pup_write(pup_port, 0x12, uint32(deg_ref(i) * 10));
-            fprintf("Ref degree %4.1f\n", deg_ref(i));
-            fprintf(" Asin\t Acos\t Azap\t dsin\t dcos\t dzap\t dAz\t dEl\n");
-        end
-
-        pause(0.3);
-        pmes_port.write("TEST", "uint8");
-        data = pmes_port.read(8, "single");
-        % disp(data);
-        deg_mes(i) = data(7);
-        fprintf("%6.1f |%6.1f |%6.1f |%6.1f |%6.1f |%6.1f |%6.1f |%6.1f\n", data);
-        deg_delta(i) = deg_ref(i) - deg_mes(i);
-
-        if deg_delta(i) > 180
-            deg_delta(i) = deg_delta(i) - 360;
-        elseif deg_delta(i) < -180
-            deg_delta(i) = deg_delta(i) + 360;
-        end
-
-        x = i;
-        y = deg_delta(i);
-
-        if isvalid(f)
-            addpoints(al, x, y);
-            p.XData = x;
-            p.YData = y;
-            txt.Position = [x, y];
-            txt.String = ['\leftarrow' num2str(y)];
-            drawnow limitrate
-        else
-            break;
-        end
-
-        if cnt_new == cnt
-            k = 0;
-        end
-
-        if cnt == cnt_old
-            k = k + 1;
-        end
-
-        if k > 2
-            cnt_new_old = cnt_new;
-            cnt_new = cnt;
-        end
-
-        cnt_old = cnt;
-
-        if cnt_new_old == 0
-            continue;
-        end
-
-        delta_cnt = cnt_new - cnt_new_old;
-
-        addpoints(al, i, delta_cnt);
-        addpoints(al_new, i, cnt_new);
-        addpoints(al_old, i, cnt_new_old);
-        p.XData = i;
-        p.YData = delta_cnt;
-        p_new_old.XData = [i i];
-        p_new_old.YData = [cnt_new cnt_new_old];
-        txt.Position = [i, delta_cnt];
-        txt_new.Position = [i, cnt_new];
-        txt_old.Position = [i, cnt_new_old];
-        txt.String = ['\leftarrow' num2str(delta_cnt)];
-        txt_new.String = ['\leftarrow' num2str(cnt_new)];
-        txt_old.String = ['\leftarrow' num2str(cnt_new_old)];
-        xlim([0 (i * 1.3)])
-        % ylim(ax1, [0 (cnt_new * 1.3)])
-        drawnow limitrate
+for i = 1:length(deg_ref)
+    if mod(i, k) == 1
+        fprintf("\n"); 
+        pup_send_deg(pup_name, pup_port, deg_ref(i));    
+        kama_send(kama_port, [deg_ref(i), 50, 3000]);    
+        fprintf("Ref degree %4.1f\n", deg_ref(i)); 
+        fprintf(" Asin\t Acos\t Azap\t dsin\t dcos\t dzap\t dAz\t dEl\n"); 
     end
 
-    outdata = [cnt_new, cnt_new_old, delta_cnt];
-    save('data.mat', 'outdata');
-    disp("cnt_new, cnt_old, delta_cnt save to outdata in data.mat");
+    pause(0.2);
+    % pmes_port.write("TEST", "uint8");
+    % data = pmes_port.pmes.read(8, "single");
+    data = zeros(1,7);
+    % disp(data);
+    deg_mes(i) = data(7); %for azimuth
+    %deg_mes(i) = data(8); %for elevation
+    fprintf("%6.1f |%6.1f |%6.1f |%6.1f |%6.1f |%6.1f |%6.1f |%6.1f\n", data);   
+    deg_delta(i) = deg_ref(i) - deg_mes(i);
 
-    pup_write(pup_port, 0x11, 0);
-    delete(pup_port);
-    delete(pmes_port);
+    if deg_delta(i) > 180
+        deg_delta(i) = deg_delta(i) - 360;
+    elseif deg_delta(i) < -180
+        deg_delta(i) = deg_delta(i) + 360;
+    end
 
-    disp("Press Ctrl+C to exit ;)");
+    x = i;
+    y = deg_delta(i);
 
-    while true
+    if isvalid(f)
+        addpoints(al, x, y);
+        p.XData = x;
+        p.YData = y;
+        txt.Position = [x, y];
+        txt.String = ['\leftarrow' num2str(y)];
+        drawnow limitrate
+    else
+        break;
     end
 
 end
 
+outdata = [deg_ref, deg_mes, deg_delta, ];
+save('data.mat', 'outdata');
+
+input("Нажмите Enter для продолжения")
+pup_send_cor(pup_name, pup_port, 0.5);
+pup_write(pup_name, pup_port, 0x1, 1);
+delete(pmes_port);
+delete(pup_port);
+delete(kama_port);
+
+disp("Press Ctrl+C to exit ;)");
+
+while true
+end
+
 %% function
-function pup_write(pup_port, id, cmd)
+function pup_send_deg(name, port, deg)
+    arguments
+        name
+        port        
+        deg (1,1) double
+    end
+    cmd = uint32(deg * 10);
+    pup_write(name, port, 0x2, cmd)
+end
+
+function pup_send_cor(name, port, correction)
+    arguments
+        name
+        port        
+        correction (1,1) double
+    end
+    cmd = typecast(int32(correction * 10), "uint32");
+    cmd = uint32(bitshift(cmd, 16));
+    pup_write(name, port, 0x6, cmd)
+end
+
+function pup_write(name, port, id, cmd)
+    arguments
+        name
+        port
+        id (1,1) uint8
+        cmd (1,1) uint32
+    end
+
+    id = bitand(id, 0xF);
+    if name == 'az'
+        id = bitor(id, 0x10);
+    elseif name == 'el'
+        id = bitor(id, 0x20);
+    end
+
     id = uint8(id);
     cmd = uint32(cmd);
     message = uint8(zeros(6, 1));
     message(1) = id;
     message(2:5) = fliplr(typecast(cmd, 'uint8'));
     message(6) = mod(sum(message), 256);
-    pup_port.write(message, 'uint8');
+    port.write(message, 'uint8');
     fprintf("Send to Pup:");
     fprintf(" 0x%02X", message);
     fprintf("\n");
 end
 
 function kama_send(port, coords)
-
-    arguments
-        port (1, 1) 
+    arguments        
+        port
         coords (1, 3) double
     end
 
@@ -192,7 +185,7 @@ function kama_send(port, coords)
 
     buf(26) = uint8(crc);
 
-    % port.write(buf, 'uint8');
+    port.write(buf, 'uint8');
     fprintf("Send from Kama:");
     fprintf(" 0x%02X", buf);
     fprintf("\n");

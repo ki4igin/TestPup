@@ -1,8 +1,8 @@
 disp('Start Init');
 
 dev_ports = struct(...
-    'pmes', find_pmes_port(), ...
     'pup', find_pup_port(), ...
+    'pmes', find_pmes_port(), ...
     'kama', find_kama_port() ...
 );
 
@@ -38,7 +38,6 @@ function pmes_port = find_pmes_port()
     disp("Поиск платы измерений...");
     baudrate = 115200;
     ports = serialportlist("available");
-    % ports = "COM6";
 
     for port = ports
         fprintf("Попытка подключения к порту %s\n", port);
@@ -46,7 +45,8 @@ function pmes_port = find_pmes_port()
         pmes_port.flush();
 
         w = warning('off', 'all');
-        data = pmes_port.readline();
+        pmes_port.write("TEST", "uint8");
+        data = pmes_port.read(8, "single");
         warning(w);
 
         if ~isempty(data)
@@ -61,7 +61,7 @@ function dev_port = find_kama_port()
     disp("Поиск порта для Камы..."); 
     baudrate = 115200;
     ports = serialportlist("available");    
-
+    ports = "COM1";
     for port = ports
         fprintf("Попытка подключения к порту %s\n", port);
         dev_port = serialport(port, baudrate, Timeout = 5);
