@@ -1,4 +1,5 @@
 clear
+close all
 % название платы для теста "az" или "el"
 pup_name = 'az';
 run("init");
@@ -14,8 +15,9 @@ pup_write(pup_name, pup_port, 0x1, 2);
 pause(0.5);
 
 % Задание коррекции ошибки
-pup_send_cor(pup_name, pup_port, -0.5);
+pup_send_cor(pup_name, pup_port, 0);
 pause(0.1);
+pup_send_deg(pup_name, pup_port, 0);
 
 % return
 input("Нажмите Enter для начала теста")
@@ -25,7 +27,7 @@ p = plot(0, 0, 'o', 'MarkerFaceColor', 'red');
 al = animatedline('Color', [0 .7 .7]);
 txt = text(0, 0, "");
 
-deg_test = (0:2:361)';
+deg_test = (0:1:360)';
 %deg_test = repelem(1,100);
 k = 2;
 
@@ -44,21 +46,21 @@ pause(0.2);
 for i = 1:length(deg_ref)
     if mod(i, k) == 1
         fprintf("\n"); 
-        pup_send_deg(pup_name, pup_port, deg_ref(i));    
+%         pup_send_deg(pup_name, pup_port, deg_ref(i));    
         kama_send(kama_port, [deg_ref(i), 50, 3000]);    
         fprintf("Ref degree %4.1f\n", deg_ref(i)); 
         fprintf(" Asin\t Acos\t Azap\t dsin\t dcos\t dzap\t dAz\t dEl\n"); 
     end
 
-    pause(0.2);
+    pause(0.05);
     % pmes_port.write("TEST", "uint8");
     % data = pmes_port.pmes.read(8, "single");
     data = zeros(1,7);
     % disp(data);
-    deg_mes(i) = data(7); %for azimuth
+%     deg_mes(i) = data(7); %for azimuth
     %deg_mes(i) = data(8); %for elevation
-    fprintf("%6.1f |%6.1f |%6.1f |%6.1f |%6.1f |%6.1f |%6.1f |%6.1f\n", data);   
-    deg_delta(i) = deg_ref(i) - deg_mes(i);
+%     fprintf("%6.1f |%6.1f |%6.1f |%6.1f |%6.1f |%6.1f |%6.1f |%6.1f\n", data);   
+%     deg_delta(i) = deg_ref(i) - deg_mes(i);
 
     if deg_delta(i) > 180
         deg_delta(i) = deg_delta(i) - 360;
@@ -66,19 +68,19 @@ for i = 1:length(deg_ref)
         deg_delta(i) = deg_delta(i) + 360;
     end
 
-    x = i;
-    y = deg_delta(i);
-
-    if isvalid(f)
-        addpoints(al, x, y);
-        p.XData = x;
-        p.YData = y;
-        txt.Position = [x, y];
-        txt.String = ['\leftarrow' num2str(y)];
-        drawnow limitrate
-    else
-        break;
-    end
+%     x = i;
+%     y = deg_delta(i);
+% 
+%     if isvalid(f)
+%         addpoints(al, x, y);
+%         p.XData = x;
+%         p.YData = y;
+%         txt.Position = [x, y];
+%         txt.String = ['\leftarrow' num2str(y)];
+%         drawnow limitrate
+%     else
+%         break;
+%     end
 
 end
 
@@ -104,7 +106,7 @@ function pup_send_deg(name, port, deg)
         port        
         deg (1,1) double
     end
-    cmd = uint32(deg * 10);
+    cmd = typecast(int32(deg * 10), "uint32");;
     pup_write(name, port, 0x2, cmd)
 end
 
